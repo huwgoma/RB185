@@ -1,0 +1,56 @@
+#! /usr/bin/env ruby
+# #! allows the terminal to execute the script using the specified interpreter
+require 'pg'
+require 'date'
+require 'pry'
+
+DB = PG.connect(dbname: 'expenses')
+
+# Commands
+def display_help
+  puts <<~HELP
+    An expense recording system
+
+    Commands:
+
+    add AMOUNT MEMO - Record a new expense.
+    clear           - Delete all expenses.
+    list            - List all expenses.
+    delete NUMBER   - Delete the expense with the id NUMBER.
+    search STRING   - List any expenses whose memo matches STRING.
+  HELP
+end
+
+def list_expenses
+  result = DB.exec("SELECT * FROM expenses ORDER BY created_on;")
+  
+  result.each do |tuple|
+    columns = [tuple['id'].rjust(5),
+               tuple['created_on'].rjust(10),
+               tuple['amount'].rjust(8),
+               tuple['memo']
+              ]
+
+    puts columns.join(' | ')
+  end
+end
+
+def add_expense(amount, memo)
+  abort ("You must specify an amount and a description.") unless amount && memo
+  
+
+  date = Date.today
+  sql = "INSERT INTO expenses (amount, memo, created_on)
+         VALUES (#{amount}, '#{memo}', '#{date}')"
+  DB.exec(sql)
+end
+
+# Command Parsing
+case ARGV.first
+when nil    then display_help
+when 'list' then list_expenses
+when 'add'  then add_expense(ARGV[1], ARGV[2])
+else 
+  puts "Sorry, we didn't recognize that command."
+  display_help 
+end

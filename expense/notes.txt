@@ -1,0 +1,48 @@
+Lesson 1 Assignment 7: Database Design
+  Practice Problems:
+  #1: Given a numeric data type of (6, 2), what is the largest value that can be
+      stored? 
+    9999.99
+  #2: What is the smallest value that can be stored?
+    -9999.99
+  #3: Add a check constraint to expenses to ensure that amount can only contain
+      positive values.
+    ALTER TABLE amount 
+    ADD CONSTRAINT positive_amount CHECK(amount > 0.00);
+
+
+Lesson 1 Assignment 8: 
+  Connect to the expenses database and print out the information for all expenses.
+  Implement this in the `expense` script file.
+
+
+Lesson 1 Assignment 9:
+  Display the list of expenses when expense is given the `list` argument.
+    eg. ./expense list
+  When no arguments are passed to expense, we want the program to display some
+  help information about its possible commands.
+
+  Practice Problems:
+  #1: Describe what is happening on Line 20 (puts <<~HELP):
+  - The <<~HEREDOC syntax marks the beginning of a multi-line HEREDOC string; the 
+  ~ syntax strips leading whitespace from the beginning of each line.
+
+
+Lesson 1 Assignment 10:
+  Can you see any potential issues with the provided solution?
+  - The given solution only verifies whether there are 2 additional arguments passed
+    to #add; it does not verify whether those arguments are passed in the right order.
+  - Additionally, it does not currently support memos with single quotes 
+    (eg. karen's car), since the SQL in the #add method will not escape the extra
+    single quote, resulting in syntax errors from premature quote closure.
+
+SQL Injection
+
+  Ruby:
+    "INSERT INTO expenses (amount, memo, created_on) 
+    VALUES (#{amount}, '#{memo}', '#{date}')"
+  
+  Parameters: 0.01, " ', '2015-01-01'); DROP TABLE expenses; -- "
+
+    INSERT INTO expenses
+    VALUES (0.01, ' ', '2015-01-01'); DROP TABLE expenses; -- ')
