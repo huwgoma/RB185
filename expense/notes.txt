@@ -36,13 +36,16 @@ Lesson 1 Assignment 10:
     (eg. karen's car), since the SQL in the #add method will not escape the extra
     single quote, resulting in syntax errors from premature quote closure.
 
-SQL Injection
 
-  Ruby:
-    "INSERT INTO expenses (amount, memo, created_on) 
-    VALUES (#{amount}, '#{memo}', '#{date}')"
+Lesson 1 Assignment 11:
+  SQL Injection
+
+    Ruby:
+      "INSERT INTO expenses (amount, memo, created_on) 
+      VALUES (#{amount}, '#{memo}', '#{date}')"
+    
+    Parameters: 0.01, " ', '2015-01-01'); DROP TABLE expenses; -- "
+      INSERT INTO expenses
+      VALUES (0.01, ' ', '2015-01-01'); DROP TABLE expenses; -- ')
+
   
-  Parameters: 0.01, " ', '2015-01-01'); DROP TABLE expenses; -- "
-
-    INSERT INTO expenses
-    VALUES (0.01, ' ', '2015-01-01'); DROP TABLE expenses; -- ')

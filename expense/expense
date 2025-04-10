@@ -27,7 +27,7 @@ def list_expenses
   result.each do |tuple|
     columns = [tuple['id'].rjust(5),
                tuple['created_on'].rjust(10),
-               tuple['amount'].rjust(8),
+               tuple['amount'].rjust(10),
                tuple['memo']
               ]
 
@@ -38,11 +38,11 @@ end
 def add_expense(amount, memo)
   abort ("You must specify an amount and a description.") unless amount && memo
   
-
   date = Date.today
   sql = "INSERT INTO expenses (amount, memo, created_on)
-         VALUES (#{amount}, '#{memo}', '#{date}')"
-  DB.exec(sql)
+         VALUES($1, $2, $3);"
+
+  DB.exec(sql, [amount, memo, date])
 end
 
 # Command Parsing
