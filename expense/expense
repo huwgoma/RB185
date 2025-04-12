@@ -56,88 +56,21 @@ class ExpenseData
     @connection = PG.connect(dbname: 'expenses')
   end
 
-  def display(result)
-    # Input: PG::Result
-
-
-    # Output: 
-    # FR: Display the returned rows
-    # NFR: Display column names as well
-
-    column_widths = result.fields.map do |column|
-      max_value_length = result.field_values(column).max_by(&:length).length
-      max_length = [column.length, max_value_length].max
-      
-      [column, max_length]
-    end.to_h
-
-    columns = result.fields.map { |column| column.rjust(column_widths[column]) }.join(' | ')
-    puts columns
-
-    result.each do |tuple|
-      row = tuple.map { |column, value| value.rjust(column_widths[column]) }.join(' | ')
-      puts row
-    end
-
-
-    # Algorithm:
-    # Given a PG::Result object as input, result:
-    # - Create a hash to map each column name to an integer width.
-    #   - (MAP) Iterate through each column/field name. For each column:
-    #     - Create a 2-element array. 
-    #       1) the column name (key)
-    #       2) An integer representing the length of the longest value in that 
-    #          column, + 2 (?)
-
-    # - Print out column names.
-    #   - (Map) Iterate through column names. For each column:
-    #     - Pad the column name to the length specified by COLWIDTHS.
-    #   - Join the padded strings with ' | ' -> print 
- 
-    # - Print out each row.
-    #   - Iterate through each row of result (hash, column => value pairs). For each row: 
-    #     - (Map) Iterate through each column-value pair. For each pair:
-    #       - Pad the value to the length specified by COLWIDTHS
-    #     - Join with ' | ' -> print
-
-
-
-    # Create a hash to map each column name to a column width
-    # eg. 
-    # { "id" => 3, "amount" => 10 }, etc.
-  end 
-
   # Read
   def list
     result = connection.exec("SELECT * FROM expenses ORDER BY created_on;")
 
     display(result)
-
-    # You have no expenses.
- 
-    # result.each do |tuple|
-    #   values = [ 
-    #     tuple['id'].rjust(5), tuple['created_on'].rjust(10),
-    #     tuple['amount'].rjust(10), tuple['memo']
-    #   ]
-
-    #   puts values.join(' | ')
-    # end    
+    # Handle 0 result case
   end
 
   def search(term)
     sql = "SELECT * FROM expenses WHERE memo ILIKE $1 ORDER BY created_on;"
 
     result = connection.exec_params(sql, ["%#{term}%"])
+    
+    display(result)
 
-    result.each do |tuple|
-      values = [ 
-        tuple['id'].rjust(5), tuple['created_on'].rjust(10),
-        tuple['amount'].rjust(10), tuple['memo']
-      ]
-
-      puts values.join(' | ')
-    end    
     # No expenses found.
   end
 
@@ -152,7 +85,44 @@ class ExpenseData
 
   private 
 
-  # DIsplay methods
+  # Display methods
+  def display(result)
+    column_widths = column_widths(result)
+
+    display_columns(result, column_widths)
+     
+    display_rows(result, column_widths)
+  end
+
+  def column_widths(result)
+    result.fields.each_with_object({}) do |column, hash|
+      longest_value_length = result.field_values(column).max_by(&:length).length
+      column_width = [column.length, longest_value_length].max + 2
+
+      hash[column] = column_width
+    end
+  end
+
+  def display_columns(result, widths)
+    columns = []
+    divider = []
+
+    result.fields.each do |column|
+      column_width = widths[column]
+
+      columns << column.center(column_width)
+      divider << '-' * column_width
+    end
+
+    puts columns.join('|')
+    puts divider.join('+')
+  end
+
+  def display_rows(result, widths)
+    result.each do |tuple|
+      puts tuple.map { |col, val| val.center(widths[col]) }.join('|')
+    end
+  end
 end
 
 CLI.new.run(ARGV)
