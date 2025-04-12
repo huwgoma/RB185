@@ -4,53 +4,106 @@ require 'pg'
 require 'date'
 require 'pry'
 
-DB = PG.connect(dbname: 'expenses')
+# CLI: Parses the arguments passed via the command line and calls the appropriate methods.
+class CLI
+  attr_reader :app
 
-# Commands
-def display_help
-  puts <<~HELP
-    An expense recording system
+  def initialize
+    @app = ExpenseData.new
+  end
 
-    Commands:
+  def run(arguments)
+    command = arguments.first
 
-    add AMOUNT MEMO - Record a new expense.
-    clear           - Delete all expenses.
-    list            - List all expenses.
-    delete NUMBER   - Delete the expense with the id NUMBER.
-    search STRING   - List any expenses whose memo matches STRING.
-  HELP
-end
+    case command
+    when 'list'
+      app.list
+    when 'search'
+      term = ARGV[1]
+      abort 'You must specify a search term!' unless term
+      
+      app.search(term)
+    when 'add'
+      amount, memo = ARGV.slice(1, 2)
+      abort "You must specify an amount and a description!" unless amount && memo
 
-def list_expenses
-  result = DB.exec("SELECT * FROM expenses ORDER BY created_on;")
-  
-  result.each do |tuple|
-    columns = [tuple['id'].rjust(5),
-               tuple['created_on'].rjust(10),
-               tuple['amount'].rjust(10),
-               tuple['memo']
-              ]
+      app.add(amount, memo)
+    else
+      display_help
+    end
+  end
 
-    puts columns.join(' | ')
+  def display_help
+    puts <<~HELP
+      An expense tracking system!
+
+      Supported Commands:
+
+      add AMOUNT MEMO - Record a new expense.
+      clear           - Delete all expenses.
+      list            - List all expenses.
+      delete NUMBER   - Delete the expense with the id NUMBER.
+      search STRING   - List any expenses whose memo matches STRING.
+    HELP
   end
 end
 
-def add_expense(amount, memo)
-  abort ("You must specify an amount and a description.") unless amount && memo
+# ExpenseData: Sends queries to the DB, formats and displays the returned data
+class ExpenseData 
+  attr_reader :connection
+
+  def initialize
+    @connection = PG.connect(dbname: 'expenses')
+  end
+
+  def display
+    # Input: PG::Result
+
+    # Output: 
+  end 
+
+  # Read
+  def list
+    result = connection.exec("SELECT * FROM expenses ORDER BY created_on;")
+
+    # You have no expenses.
+ 
+    result.each do |tuple|
+      values = [ 
+        tuple['id'].rjust(5), tuple['created_on'].rjust(10),
+        tuple['amount'].rjust(10), tuple['memo']
+      ]
+
+      puts values.join(' | ')
+    end    
+  end
+
+  def search(term)
+    sql = "SELECT * FROM expenses WHERE memo ILIKE $1 ORDER BY created_on;"
+
+    result = connection.exec_params(sql, ["%#{term}%"])
+
+    result.each do |tuple|
+      values = [ 
+        tuple['id'].rjust(5), tuple['created_on'].rjust(10),
+        tuple['amount'].rjust(10), tuple['memo']
+      ]
+
+      puts values.join(' | ')
+    end    
+    # No expenses found.
+  end
+
+  # Create
+  def add(amount, memo)
+    date = Date.today
+    sql = "INSERT INTO expenses(amount, memo, created_on)
+           VALUES($1, $2, $3)"
+
+    connection.exec_params(sql, [amount, memo, date])
+  end
+
   
-  date = Date.today
-  sql = "INSERT INTO expenses (amount, memo, created_on)
-         VALUES($1, $2, $3);"
-
-  DB.exec(sql, [amount, memo, date])
 end
 
-# Command Parsing
-case ARGV.first
-when nil    then display_help
-when 'list' then list_expenses
-when 'add'  then add_expense(ARGV[1], ARGV[2])
-else 
-  puts "Sorry, we didn't recognize that command."
-  display_help 
-end
+CLI.new.run(ARGV)
