@@ -59,19 +59,17 @@ class ExpenseData
   # Read
   def list
     result = connection.exec("SELECT * FROM expenses ORDER BY created_on;")
+    abort 'You have no expenses.' if result.ntuples.zero?
 
     display(result)
-    # Handle 0 result case
   end
 
   def search(term)
     sql = "SELECT * FROM expenses WHERE memo ILIKE $1 ORDER BY created_on;"
-
     result = connection.exec_params(sql, ["%#{term}%"])
+    abort 'No results found.' if result.ntuples.zero?
     
     display(result)
-
-    # No expenses found.
   end
 
   # Create
