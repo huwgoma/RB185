@@ -28,6 +28,11 @@ class CLI
       abort "You must specify an amount and a description!" unless amount && memo
 
       app.add(amount, memo)
+    when 'delete'
+      id = ARGV[1]
+      abort 'You must specify an ID!' unless id
+
+      app.delete(id)
     else
       display_help
     end
@@ -79,6 +84,28 @@ class ExpenseData
            VALUES($1, $2, $3)"
 
     connection.exec_params(sql, [amount, memo, date])
+  end
+
+  # Delete
+  def delete(id)
+    # Input: integer id
+    # Output: Delete the expense from expenses where id = id 
+    # - "That expense (id = __) does not exist!" if 
+
+    # Check if id exists in expenses
+    # If it does, delete 
+    # Otherwise, abort with an error message
+    target_expense = connection.exec_params("SELECT * FROM expenses WHERE id = $1", [id])
+    
+    if target_expense.ntuples.zero?
+      puts "That expense (id = #{id}) does not exist!"
+    else
+      connection.exec_params("DELETE FROM expenses WHERE id = $1", [id])
+    
+      memo = target_expense.field_values('Memo').first
+      puts "Expense ##{id} (#{memo}) was deleted:"
+      display(target_expense)
+    end
   end
 
   private 
