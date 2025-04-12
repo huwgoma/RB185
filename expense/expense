@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby
 # #! allows the terminal to execute the script using the specified interpreter
 require 'pg'
+
+require 'io/console'
 require 'date'
 require 'pry'
 
@@ -19,7 +21,7 @@ class CLI
     when 'list'
       app.list
     when 'search'
-      term = ARGV[1]
+      term = ARGV[1] # replace w arguments
       abort 'You must specify a search term!' unless term
       
       app.search(term)
@@ -33,8 +35,26 @@ class CLI
       abort 'You must specify an ID!' unless id
 
       app.delete(id)
+    when 'clear'
+      puts 'This will delete all expenses permanently. Are you sure? (Y/N)'
+      input = prompt(['Y', 'N'])
+      
+      app.delete_all if input == 'Y'
     else
       display_help
+    end
+  end
+
+  private
+
+  def prompt(legal_values)
+    legal_values = legal_values.map(&:upcase)
+
+    loop do
+      input = $stdin.getch.upcase
+      return input if legal_values.include?(input)
+
+      puts "Please enter #{legal_values.join(' or ')}!"
     end
   end
 
@@ -88,13 +108,6 @@ class ExpenseData
 
   # Delete
   def delete(id)
-    # Input: integer id
-    # Output: Delete the expense from expenses where id = id 
-    # - "That expense (id = __) does not exist!" if 
-
-    # Check if id exists in expenses
-    # If it does, delete 
-    # Otherwise, abort with an error message
     target_expense = connection.exec_params("SELECT * FROM expenses WHERE id = $1", [id])
     
     if target_expense.ntuples.zero?
@@ -106,6 +119,11 @@ class ExpenseData
       puts "Expense ##{id} (#{memo}) was deleted:"
       display(target_expense)
     end
+  end
+
+  def delete_all
+    connection.exec("DELETE FROM expenses;")
+    puts "All expenses have been deleted."
   end
 
   private 
