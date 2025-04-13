@@ -132,9 +132,21 @@ class ExpenseData
   def display(result)
     column_widths = column_widths(result)
 
+    puts "There are #{result.ntuples} expenses.\n\n"
+
+    puts column_header(result.fields, column_widths)
+
+    puts horizontal_divider(column_widths)
+
+    puts rows
+
+    binding.pry
+    # 
+
     display_columns(result, column_widths)
-     
+    display_divider(result, column_widths)
     display_rows(result, column_widths)
+    display_divider(result, column_widths)
   end
 
   def column_widths(result)
@@ -146,20 +158,18 @@ class ExpenseData
     end
   end
 
-  def display_columns(result, widths)
-    columns = []
-    divider = []
+  def column_header(columns, widths)
+    columns.map do |column|
+      width = widths[column]
 
-    result.fields.each do |column|
-      column_width = widths[column]
-
-      columns << column.center(column_width)
-      divider << '-' * column_width
-    end
-
-    puts columns.join('|')
-    puts divider.join('+')
+      column.center(width)
+    end.join('|')
   end
+
+  def horizontal_divider(widths)
+    widths.values.map { |length| '-' * length }.join('+')
+  end
+
 
   def display_rows(result, widths)
     result.each do |tuple|
