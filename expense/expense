@@ -138,15 +138,9 @@ class ExpenseData
 
     puts horizontal_divider(column_widths)
 
-    puts rows
+    puts rows(result, column_widths)
+    puts horizontal_divider(column_widths)
 
-    binding.pry
-    # 
-
-    display_columns(result, column_widths)
-    display_divider(result, column_widths)
-    display_rows(result, column_widths)
-    display_divider(result, column_widths)
   end
 
   def column_widths(result)
@@ -170,10 +164,9 @@ class ExpenseData
     widths.values.map { |length| '-' * length }.join('+')
   end
 
-
-  def display_rows(result, widths)
-    result.each do |tuple|
-      puts tuple.map { |col, val| val.center(widths[col]) }.join('|')
+  def rows(result, widths)
+    result.map do |row|
+      row.map { |column, value| value.center(widths[column]) }.join('|')
     end
   end
 end
