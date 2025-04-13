@@ -132,15 +132,15 @@ class ExpenseData
   def display(result)
     column_widths = column_widths(result)
 
-    puts "There are #{result.ntuples} expenses.\n\n"
+    puts count_report(result)
 
-    puts column_header(result.fields, column_widths)
-
+    puts column_header(result, column_widths)
     puts horizontal_divider(column_widths)
 
     puts rows(result, column_widths)
     puts horizontal_divider(column_widths)
 
+    puts total_amount_report(result, column_widths)
   end
 
   def column_widths(result)
@@ -152,8 +152,17 @@ class ExpenseData
     end
   end
 
-  def column_header(columns, widths)
-    columns.map do |column|
+  def count_report(result)
+    count = result.ntuples
+    case count
+    when 0 then 'There are no expenses.'
+    when 1 then 'There is 1 expense.'
+    else        "There are #{count} expenses."
+    end
+  end
+
+  def column_header(result, widths)
+    result.fields.map do |column|
       width = widths[column]
 
       column.center(width)
@@ -168,6 +177,12 @@ class ExpenseData
     result.map do |row|
       row.map { |column, value| value.center(widths[column]) }.join('|')
     end
+  end
+
+  def total_amount_report(result, widths)
+    total = result.field_values('amount').map { |str| str.gsub(/\$/, '').to_f }.sum
+
+    "Total: $#{total}"
   end
 end
 
